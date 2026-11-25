@@ -108,7 +108,7 @@ def check_shard(folder, task, role, plan, official, checkpoint):
     protocol, summary = check_run(folder)
     expected = {k: v for k, v in plan.items() if k != "lift_threshold_m"}
     expected.update({k: official[k] for k in ("backbone", "assets", "demonstrations")})
-    expected["task_ids"] = [task]
+    expected["task_ids"] = [task] if isinstance(task, int) else list(task)
     digest = official["weight_sha256"]["policy"]
     if role == "adapted":
         digest = checkpoint["checkpoint_sha256"]
