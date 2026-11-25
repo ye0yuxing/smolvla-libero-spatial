@@ -1,0 +1,211 @@
+{
+  "step": 25000,
+  "checkpoint_sha256": "11e6d9a2fa18df52f14d9fe683eb07fc0bfc3daf8bdce61ec25ad34f7db5d8d2",
+  "tie_break": "earliest_step",
+  "development": {
+    "5000": {
+      "episodes": 30,
+      "successes": 14,
+      "failures": {
+        "no_target_contact": 9,
+        "contact_without_lift": 3,
+        "lift_without_placement": 4
+      },
+      "per_task": {
+        "0": {
+          "successes": 2,
+          "episodes": 3
+        },
+        "1": {
+          "successes": 2,
+          "episodes": 3
+        },
+        "2": {
+          "successes": 1,
+          "episodes": 3
+        },
+        "3": {
+          "successes": 2,
+          "episodes": 3
+        },
+        "4": {
+          "successes": 0,
+          "episodes": 3
+        },
+        "5": {
+          "successes": 0,
+          "episodes": 3
+        },
+        "6": {
+          "successes": 3,
+          "episodes": 3
+        },
+        "7": {
+          "successes": 2,
+          "episodes": 3
+        },
+        "8": {
+          "successes": 2,
+          "episodes": 3
+        },
+        "9": {
+          "successes": 0,
+          "episodes": 3
+        }
+      }
+    },
+    "10000": {
+      "episodes": 30,
+      "successes": 17,
+      "failures": {
+        "no_target_contact": 7,
+        "contact_without_lift": 2,
+        "lift_without_placement": 4
+      },
+      "per_task": {
+        "0": {
+          "successes": 3,
+          "episodes": 3
+        },
+        "1": {
+          "successes": 1,
+          "episodes": 3
+        },
+        "2": {
+          "successes": 1,
+          "episodes": 3
+        },
+        "3": {
+          "successes": 3,
+          "episodes": 3
+        },
+        "4": {
+          "successes": 1,
+          "episodes": 3
+        },
+        "5": {
+          "successes": 0,
+          "episodes": 3
+        },
+        "6": {
+          "successes": 2,
+          "episodes": 3
+        },
+        "7": {
+          "successes": 3,
+          "episodes": 3
+        },
+        "8": {
+          "successes": 1,
+          "episodes": 3
+        },
+        "9": {
+          "successes": 2,
+          "episodes": 3
+        }
+      }
+    },
+    "15000": {
+      "episodes": 30,
+      "successes": 21,
+      "failures": {
+        "no_target_contact": 5,
+        "contact_without_lift": 1,
+        "lift_without_placement": 3
+      },
+      "per_task": {
+        "0": {
+          "successes": 3,
+          "episodes": 3
+        },
+        "1": {
+          "successes": 1,
+          "episodes": 3
+        },
+        "2": {
+          "successes": 3,
+          "episodes": 3
+        },
+        "3": {
+          "successes": 3,
+          "episodes": 3
+        },
+        "4": {
+          "successes": 2,
+          "episodes": 3
+        },
+        "5": {
+          "successes": 0,
+          "episodes": 3
+        },
+        "6": {
+          "successes": 2,
+          "episodes": 3
+        },
+        "7": {
+          "successes": 3,
+          "episodes": 3
+        },
+        "8": {
+          "successes": 2,
+          "episodes": 3
+        },
+        "9": {
+          "successes": 2,
+          "episodes": 3
+        }
+      }
+    },
+    "25000": {
+      "episodes": 30,
+      "successes": 25,
+      "failures": {
+        "no_target_contact": 2,
+        "contact_without_lift": 0,
+        "lift_without_placement": 3
+      },
+      "per_task": {
+        "0": {
+          "successes": 3,
+          "episodes": 3
+        },
+        "1": {
+          "successes": 3,
+          "episodes": 3
+        },
+        "2": {
+          "successes": 3,
+          "episodes": 3
+        },
+        "3": {
+          "successes": 3,
+          "episodes": 3
+        },
+        "4": {
+          "successes": 2,
+          "episodes": 3
+        },
+        "5": {
+          "successes": 0,
+          "episodes": 3
+        },
+        "6": {
+          "successes": 3,
+          "episodes": 3
+        },
+        "7": {
+          "successes": 3,
+          "episodes": 3
+        },
+        "8": {
+          "successes": 3,
+          "episodes": 3
+        },
+        "9": {
+          "successes": 2,
+          "episodes": 3
+        }
+      }
+    }
+  }
+}

@@ -3,6 +3,7 @@
 import argparse
 import fcntl
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -22,6 +23,11 @@ from final_protocol import (
 
 def check_base_task(folder, task, plan, official, checkpoint, reference, runtime):
     protocol, summary = check_run(folder)
+    # The step-zero policy uses base weights. The interface provider can differ
+    # between runs when its configuration and every processor file are identical.
+    donor = protocol.get("policy", {}).get("interface_checkpoint_sha256")
+    if not isinstance(donor, str) or not re.fullmatch("[0-9a-f]{64}", donor):
+        raise ValueError(f"{folder}: missing or invalid interface provider digest")
     expected = {k: v for k, v in plan.items() if k != "lift_threshold_m"}
     expected.update({k: official[k] for k in ("backbone", "assets", "demonstrations")})
     expected.update(runtime)
@@ -31,7 +37,7 @@ def check_base_task(folder, task, plan, official, checkpoint, reference, runtime
         **checkpoint["initialization"],
         "spatial_updates": 0,
         "base_sha256": checkpoint["base_sha256"],
-        "interface_checkpoint_sha256": checkpoint["checkpoint_sha256"],
+        "interface_checkpoint_sha256": donor,
         "normalization_split_sha256": checkpoint["split_sha256"],
         "interface_sha256": expected_interface(checkpoint),
     }

@@ -9,9 +9,16 @@
     "revision": "a1aaacb7f6cd6ee5fb43120f673cebb0cfea7dd4"
   },
   "split_sha256": "44f9f6d345f00432461e2ae2904f8f5af8b37eb00dfaac70fddc607801b8f79d",
-  "step": 2000,
+  "step": 25000,
   "seed": 2026,
-  "checkpoint_sha256": "494ef1058765c687a73f1cff3496f65535849ed455731296b567425d664da7e1",
+  "checkpoint_sha256": "11e6d9a2fa18df52f14d9fe683eb07fc0bfc3daf8bdce61ec25ad34f7db5d8d2",
+  "interface_sha256": {
+    "config.json": "7c7ac5639c8052b41062b9e382e88588ab4e70adeba5f02b4ae20066ae0730a3",
+    "policy_postprocessor.json": "3b51f092c70c710ce0213ee1b63bf51b4878ec67828dd2d67daf9ef51081a41a",
+    "policy_postprocessor_step_0_unnormalizer_processor.safetensors": "51aafe9e070c0661eb8b6da4adc122c65d94dbd2af8e29b6cff6200866bcd9b7",
+    "policy_preprocessor.json": "28267dac4662868041b2f97ee19080947135bb27456976eae079e71d8ebdde5f",
+    "policy_preprocessor_step_5_normalizer_processor.safetensors": "51aafe9e070c0661eb8b6da4adc122c65d94dbd2af8e29b6cff6200866bcd9b7"
+  },
   "checkpoint_bytes": 906712552,
   "train_statistics_verified": true,
   "tensor_comparison": {
@@ -25,7 +32,7 @@
     },
     "action_expert": {
       "total": 145,
-      "changed": 112
+      "changed": 145
     },
     "vision_language_backbone": {
       "total": 345,

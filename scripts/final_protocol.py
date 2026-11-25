@@ -45,6 +45,7 @@ def expected_interface(checkpoint):
 def load_protocol(checkpoint_record=None):
     plan = read_json(ROOT / "configs/final_spatial.json")
     official = read_json(ROOT / "configs/official_spatial.json")
+    training = read_json(ROOT / "configs/spatial_train.json")
     checkpoint = read_json(RECORDED_CHECKPOINT)
     if checkpoint_record is not None:
         other = read_json(checkpoint_record)
@@ -53,14 +54,16 @@ def load_protocol(checkpoint_record=None):
             "base_sha256",
             "dataset",
             "split_sha256",
-            "step",
             "seed",
             "train_statistics_verified",
         ):
             if other[key] != checkpoint[key]:
                 raise ValueError(f"Adapted checkpoint uses a different training recipe: {key}")
         checkpoint = other
-    if set(plan["initial_state_ids"]) & set(official["initial_state_ids"]):
+    if checkpoint["step"] not in training["selection_steps"]:
+        raise ValueError("Checkpoint step is outside the declared development candidates")
+    development_states = set(official["initial_state_ids"]) | set(training["development_state_ids"])
+    if set(plan["initial_state_ids"]) & development_states:
         raise ValueError("Final and development states overlap")
     return plan, official, checkpoint
 

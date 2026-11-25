@@ -1,18 +1,18 @@
 # Both policies lifted the target bowl. One completed the placement.
 
-In LIBERO-Spatial task 0, the instruction identifies the black bowl between the plate and the ramekin. On initial state 12, both policies made two-sided contact with the requested bowl and lifted it. The released policy satisfied the placement predicate after 77 actions. The adapted policy ran for 280 actions and timed out. The shared seed was 1012, and the two saved simulator states immediately after settling had the same SHA-256 digest. [Released video](released.mp4) · [Adapted video](adapted.mp4) · [Frame-by-frame measurements](trace.csv)
+In LIBERO-Spatial task 0, the instruction identifies the black bowl between the plate and the ramekin. On initial state 27, both policies made two-sided contact with the requested bowl and lifted it. The released policy satisfied the placement predicate after 79 actions. The 25,000-update project policy ran for 280 actions and timed out. The shared seed was 1027, and the saved simulator states immediately after settling had the same SHA-256 digest. [Released video](released.mp4) · [Adapted video](adapted.mp4) · [Frame-by-frame measurements](trace.csv)
 
-![External and wrist cameras at reset, after action 68 and at termination. The successful and unsuccessful runs start from the same scene.](placement.jpg)
+![External and wrist cameras at reset, after action 75 and at each policy’s final frame.](placement.jpg)
 
 | Observation | Released checkpoint | Project-trained checkpoint |
 | --- | ---: | ---: |
-| First sampled two-pad contact on target | Frame 50 | Frame 48 |
-| First target lift of at least 3 cm during contact | Frame 56 | Frame 52 |
-| Greatest rise during contact | 9.73 cm | 7.48 cm |
-| Bowl–plate horizontal separation at frame 68 | 0.76 cm | 5.70 cm |
-| Bowl–plate horizontal separation at termination | 2.08 cm | 4.82 cm |
-| Last sampled two-pad contact with target | Frame 77 | Frame 76 |
+| First sampled two-pad contact on target | Frame 61 | Frame 59 |
+| First target lift of at least 3 cm during contact | Frame 61 | Frame 59 |
+| Greatest rise during contact | 10.00 cm | 11.38 cm |
+| Bowl–plate horizontal separation at frame 75 | 2.76 cm | 4.86 cm |
+| Bowl–plate horizontal separation at termination | 1.83 cm | 7.01 cm |
+| Last sampled two-pad contact with target | Frame 79 | Frame 84 |
 
-At frame 68 the released policy had carried the target over the plate center. The adapted policy had also transported the bowl toward the plate, but the centers were 5.70 cm apart and the bowl had already descended to 1.59 cm above its initial height. After frame 76, the target never again touched both fingerpad groups in a sampled frame. The final wrist view shows the bowl overlapping the plate in the image. LIBERO still marked the episode unsuccessful. Neither rollout registered two-sided contact with the other black bowl.
+At frame 75 the target was still between the fingerpads in both rollouts. Its center was 3.82 cm above its initial height under the released policy and 6.23 cm above it under the adapted policy. Four actions later, the released policy completed the placement. Under the adapted policy, the last measured two-pad contact occurred at frame 84 and the run ended with the bowl center 7.01 cm from the plate center in the table plane.
 
-This pair illustrates a failure after a verified lift. Horizontal distance measures the separation of the simulated body positions in the table plane. LIBERO evaluates task success with its own predicate. Across all 100 adapted rollouts, 17 failures reached the lift threshold during target contact. [Failure counts and evaluation protocol](../README.md)
+LIBERO evaluates success with its bowl-on-plate predicate. The distances describe the trajectories. Across the 100 project-policy rollouts, seven ended unsuccessfully after a lift of at least 3 cm during sampled two-pad contact. [Failure counts and evaluation protocol](../README.md)

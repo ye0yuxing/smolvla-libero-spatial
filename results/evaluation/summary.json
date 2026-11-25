@@ -1,7 +1,7 @@
 {
   "starts": 100,
   "rollouts": 300,
-  "adapted_minus_base_pp": 24.0,
+  "adapted_minus_base_pp": 70.0,
   "policies": {
     "base": {
       "episodes": 100,
@@ -17,14 +17,14 @@
     },
     "adapted": {
       "episodes": 100,
-      "successes": 24,
-      "actions": 23940,
-      "chunk_calls": 521,
-      "median_chunk_ms": 385.02,
+      "successes": 70,
+      "actions": 15709,
+      "chunk_calls": 362,
+      "median_chunk_ms": 398.33,
       "failure_counts": {
-        "no_target_contact": 57,
-        "contact_without_lift": 2,
-        "lift_without_placement": 17
+        "no_target_contact": 19,
+        "contact_without_lift": 4,
+        "lift_without_placement": 7
       }
     },
     "released": {

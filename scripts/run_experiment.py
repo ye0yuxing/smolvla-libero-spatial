@@ -1,4 +1,4 @@
-"""Train the long Spatial recipe and select one checkpoint by paired development rollouts."""
+"""Train SmolVLA on Spatial, select by development success and evaluate on paired final starts."""
 
 import argparse
 import fcntl
@@ -60,7 +60,6 @@ def train_to(folder, step, micro):
         folder.rename(folder.with_name(f"{folder.name}.incomplete-{time_ns()}"))
     run(
         "train.py",
-        "--long-budget",
         "--output",
         folder,
         "--micro-batch-size",
@@ -92,7 +91,7 @@ def checkpoint_record(training, step, baseline, output):
             "train_statistics_verified",
         )
     ):
-        raise ValueError("Long and short recipes do not share the intended base and data")
+        raise ValueError("Checkpoint provenance differs from the recorded initialization or split")
     history = read_json(folder / "history.json")
     if (
         history["recipe"]["precision"] != "fp32_trainable_bf16_autocast"
@@ -171,7 +170,7 @@ def summarize(rows):
 
 def workflow(output, micro):
     plan, official, baseline = load_protocol()
-    recipe = read_json(ROOT / "configs/spatial_long.json")
+    recipe = read_json(ROOT / "configs/spatial_train.json")
     reference, runtime = reference_results(ROOT / "results/evaluation", plan, official, baseline)
     dev = {**plan, "initial_state_ids": recipe["development_state_ids"]}
     if set(dev["initial_state_ids"]) & set(plan["initial_state_ids"]):
@@ -182,11 +181,11 @@ def workflow(output, micro):
     freeze(
         output / "run-plan.json",
         {
-            "recipe": {**read_json(ROOT / "configs/spatial_train.json"), **recipe},
+            "recipe": recipe,
             "micro_batch_size": micro,
             "development": dev,
             "final": plan,
-            "reference_adapted_sha256": baseline["checkpoint_sha256"],
+            "base_sha256": baseline["base_sha256"],
             "reference_released_sha256": official["weight_sha256"]["policy"],
             "split_sha256": baseline["split_sha256"],
         },
@@ -259,7 +258,7 @@ def workflow(output, micro):
             )
         )
     comparison = {}
-    for role in ("adapted", "released", "base"):
+    for role in ("released", "base"):
         paired = Counter()
         for row in final_rows:
             old = reference[role, row["task"], row["state"]]
@@ -271,13 +270,13 @@ def workflow(output, micro):
             old_success = old["success"] == "True"
             outcome = {
                 (True, True): "both",
-                (True, False): "long_only",
+                (True, False): "adapted_only",
                 (False, True): "reference_only",
                 (False, False): "neither",
             }[row["success"], old_success]
             paired[outcome] += 1
         comparison[role] = {
-            k: paired[k] for k in ("both", "long_only", "reference_only", "neither")
+            k: paired[k] for k in ("both", "adapted_only", "reference_only", "neither")
         }
     final = {
         "selected_step": winner,
@@ -296,7 +295,7 @@ def workflow(output, micro):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--micro-batch-size", choices=[16, 32], required=True, type=int)
+    parser.add_argument("--micro-batch-size", choices=[16, 32], default=32, type=int)
     args = parser.parse_args()
     os.environ.update(
         HF_HUB_OFFLINE="1",

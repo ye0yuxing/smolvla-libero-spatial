@@ -173,8 +173,56 @@ def collect(reference_dir, base_dir, dest):
         out.rename(dest)
 
 
+def verify_recorded_selection(plan, checkpoint):
+    training = ROOT / "results/training"
+    recipe = read_json(ROOT / "configs/spatial_train.json")
+    history = read_json(training / "training_history.json")
+    selection = read_json(training / "selection.json")
+    if (
+        history["recipe"] != recipe
+        or history["step"] != recipe["steps"]
+        or history["split_sha256"] != checkpoint["split_sha256"]
+        or file_sha256(training / "spatial_split.json") != checkpoint["split_sha256"]
+    ):
+        raise ValueError("Recorded training history, recipe and episode split disagree")
+    if checkpoint["interface_sha256"] != read_json(ROOT / "configs/spatial_interface_sha256.json"):
+        raise ValueError(
+            "The selected checkpoint differs from the interface used by the base control"
+        )
+    scores = {int(s): v for s, v in selection["development"].items()}
+    if set(scores) != set(recipe["selection_steps"]):
+        raise ValueError("Development results are missing candidate checkpoints")
+    starts = len(recipe["development_state_ids"])
+    for score in scores.values():
+        tasks = score["per_task"]
+        if (
+            set(map(int, tasks)) != set(plan["task_ids"])
+            or any(
+                t["episodes"] != starts or not 0 <= t["successes"] <= starts for t in tasks.values()
+            )
+            or score["episodes"] != len(tasks) * starts
+            or score["successes"] != sum(t["successes"] for t in tasks.values())
+            or sum(score["failures"].values()) + score["successes"] != score["episodes"]
+        ):
+            raise ValueError("Inconsistent development coverage or success counts")
+    winner = max(scores, key=lambda s: (scores[s]["successes"], -s))
+    if (
+        selection["tie_break"] != recipe["selection_tie_break"]
+        or selection["tie_break"] != "earliest_step"
+        or winner != selection["step"]
+        or winner != checkpoint["step"]
+        or selection["checkpoint_sha256"] != checkpoint["checkpoint_sha256"]
+    ):
+        raise ValueError(
+            "Selected checkpoint does not match the development scores and final weights"
+        )
+    print(f"Verified checkpoint selection at {winner:,} updates.")
+
+
 def verify(directory):
     plan, official, checkpoint = load_protocol(reference_record(directory))
+    if directory.resolve() == (ROOT / "results/evaluation").resolve():
+        verify_recorded_selection(plan, checkpoint)
     reference_results(directory, plan, official, checkpoint)
     hashes = read_json(directory / "sha256.json")
     expected = {"comparison.json", "episodes.csv", "per-task.csv", "summary.json"}

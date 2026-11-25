@@ -176,10 +176,8 @@ def backward_loss(policy, pre, sample, micro_batch_size):
     return total
 
 
-def train(output, resume, stop, long_budget, micro_batch_size, profile):
+def train(output, resume, stop, micro_batch_size, profile):
     cfg, shared, split = (json.loads(p.read_text()) for p in (RECIPE, CONFIG, SPLIT))
-    if long_budget:
-        cfg.update(json.loads((RECIPE.parent / "spatial_long.json").read_text()))
     micro_batch_size = cfg["batch_size"] if micro_batch_size is None else micro_batch_size
     if micro_batch_size < 1 or cfg["batch_size"] % micro_batch_size:
         raise ValueError("The microbatch size must be a positive divisor of the effective batch")
@@ -195,13 +193,12 @@ def train(output, resume, stop, long_budget, micro_batch_size, profile):
     torch.manual_seed(cfg["seed"])
     torch.set_num_threads(1)
     split_hash = hashlib.sha256(SPLIT.read_bytes()).hexdigest()
-    if long_budget:
-        reference = json.loads((CONFIG.parents[1] / "results/training/checkpoint.json").read_text())
-        base_file = input_dir("base", cfg) / "model.safetensors"
-        with base_file.open("rb") as f:
-            base_hash = hashlib.file_digest(f, "sha256").hexdigest()
-        if (split_hash, base_hash) != (reference["split_sha256"], cfg["base_sha256"]):
-            raise ValueError("The long-budget run requires the original split and base weights")
+    reference = json.loads((CONFIG.parents[1] / "results/training/checkpoint.json").read_text())
+    base_file = input_dir("base", cfg) / "model.safetensors"
+    with base_file.open("rb") as f:
+        base_hash = hashlib.file_digest(f, "sha256").hexdigest()
+    if (split_hash, base_hash) != (reference["split_sha256"], cfg["base_sha256"]):
+        raise ValueError("The training split or the pretrained weights differ from the recipe")
     history = {
         "recipe": cfg,
         "split_sha256": split_hash,
@@ -232,13 +229,12 @@ def train(output, resume, stop, long_budget, micro_batch_size, profile):
         raise ValueError(f"Already at step {start}, requested {end}")
     weights = checkpoint / "pretrained_model" if resume else input_dir("base", cfg)
     policy, pre, post = make_model(cfg, shared, split, weights)
-    promoted = promote_trainable(policy, checkpoint) if long_budget else {}
+    promoted = promote_trainable(policy, checkpoint)
     parameters = [p for p in policy.parameters() if p.requires_grad]
-    if long_budget:
-        if any(p.dtype != torch.float32 for p in parameters):
-            raise ValueError("Every trainable weight must be FP32")
-        history["micro_batch_size"] = micro_batch_size
-        history["promoted_parameters"] = sum(p.numel() for p in promoted.values())
+    if any(p.dtype != torch.float32 for p in parameters):
+        raise ValueError("Every trainable weight must be FP32")
+    history["micro_batch_size"] = micro_batch_size
+    history["promoted_parameters"] = sum(p.numel() for p in promoted.values())
     history["trainable_parameters"] = sum(p.numel() for p in parameters)
     history["total_parameters"] = sum(p.numel() for p in policy.parameters())
     optimizer = torch.optim.AdamW(
@@ -265,8 +261,7 @@ def train(output, resume, stop, long_budget, micro_batch_size, profile):
     )
     if resume:
         load_optimizer_state(optimizer, checkpoint)
-        if long_budget:
-            check_adam_precision(optimizer)
+        check_adam_precision(optimizer)
         load_rng_state(checkpoint)
     elif not profile:
         score = validation_loss(policy, pre, batches, cfg["seed"])
@@ -294,7 +289,7 @@ def train(output, resume, stop, long_budget, micro_batch_size, profile):
         if profile and step > 10:
             measured_seconds += elapsed
         history["training_seconds"] += elapsed
-        if long_budget and step == start + 1:
+        if step == start + 1:
             check_adam_precision(optimizer)
         losses.append(loss)
         history["step"] = step
@@ -304,13 +299,12 @@ def train(output, resume, stop, long_budget, micro_batch_size, profile):
                 "updates": len(losses),
                 "mean_loss": statistics.mean(losses),
                 "lr": lr,
+                "windows_per_second": len(losses) * cfg["batch_size"] / interval_seconds,
+                "peak_allocated_gib": torch.cuda.max_memory_allocated() / 2**30,
             }
-            if long_budget:
-                point["windows_per_second"] = len(losses) * cfg["batch_size"] / interval_seconds
-                point["peak_allocated_gib"] = torch.cuda.max_memory_allocated() / 2**30
-                status = output / "progress.tmp"
-                write_json(status, point)
-                status.replace(output / "progress.json")
+            status = output / "progress.tmp"
+            write_json(status, point)
+            status.replace(output / "progress.json")
             history["training"].append(point)
             print(json.dumps(point), flush=True)
             losses.clear()
@@ -356,18 +350,17 @@ def main():
         "--resume", action="store_true", help="Resume the latest complete checkpoint"
     )
     parser.add_argument("--stop-at", type=int, help="Save and stop at this absolute step")
-    parser.add_argument("--long-budget", action="store_true", help="Use configs/spatial_long.json")
     parser.add_argument(
         "--micro-batch-size", type=int, help="Accumulate to the recipe's batch size"
     )
     parser.add_argument(
         "--profile",
         action="store_true",
-        help="Time 40 long-budget updates after 10 warm-up updates",
+        help="Time 40 optimizer updates after a 10-update warm-up",
     )
     args = parser.parse_args()
-    if args.profile and (not args.long_budget or args.resume or args.stop_at is not None):
-        parser.error("--profile needs a fresh --long-budget run")
+    if args.profile and (args.resume or args.stop_at is not None):
+        parser.error("--profile needs a fresh run")
     args.output.mkdir(parents=True, exist_ok=args.resume)
     with (args.output / ".train.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -375,7 +368,6 @@ def main():
             args.output,
             args.resume,
             args.stop_at,
-            args.long_budget,
             args.micro_batch_size,
             args.profile,
         )

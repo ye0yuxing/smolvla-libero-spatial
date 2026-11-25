@@ -12,14 +12,23 @@ Each sampled observation supplies its language instruction, two images, robot st
 
 | Measurement | Value |
 | --- | ---: |
-| Updates × batch size | 2,000 × 8 |
+| Updates × batch size | 25,000 × 32 (800,000 sampled observation windows) |
 | Trainable / total parameters | 99,880,992 / 450,046,176 |
-| Fixed-window validation loss, initial → final | 3.3575 → 0.5740 |
-| Optimizer loop time | 291.31 s |
-| Peak PyTorch GPU memory in that loop | 2.77 GiB allocated, 2.82 GiB reserved |
+| Optimizer loop time | 8,875.71 s (about 2 h 28 min) |
+| Peak PyTorch GPU memory in that loop | 7.93 GiB allocated, 8.43 GiB reserved |
 
-Training used AdamW, BF16 autocast, gradient clipping at 10, a 100-update warm-up and cosine decay from a peak learning rate of 0.0001. The reported time covers the optimizer updates and the wait for training batches. [Training and validation history](training_history.json)
+AdamW used FP32 trainable weights and optimizer moments, BF16 autocast, and gradient clipping at 10. The learning rate reached `1e-4` after 1,000 updates and decayed to `2.5e-6` by update 25,000. The measured time covers optimizer updates and their training batches. Checkpoints contain the FP32 training state for resumption and a LeRobot export in the model’s native inference dtypes. [Training and validation history](training_history.json)
 
-![Fixed-window validation loss falls from 3.3575 at initialization to 0.5740 at update 2,000.](learning-curve.png)
+## Choosing the checkpoint
 
-The checkpoint verification found all 345 vision-language backbone tensors bitwise identical to their base values. Both state-projection tensors, all eight action and time projection tensors, and 112 of 145 action-expert tensors changed. The exported processors matched the training-split statistics. The trained model can be regenerated with the documented recipe. [Recorded checkpoint digest and tensor comparison](checkpoint.json) · [Reproduction commands](../../docs/reproduce.md) · [Closed-loop results](../evaluation/README.md)
+Each candidate ran the same ten instructions from initial states 0, 1 and 3. The selection rule used the highest closed-loop success count, with ties going to the earlier checkpoint. The 25,000-update model won and completed 70 placements on the separate 100-start final evaluation. [Development scores by task](selection.json) · [Final evaluation](../evaluation/README.md)
+
+| Updates | 5,000 | 10,000 | 15,000 | 25,000 |
+| --- | ---: | ---: | ---: | ---: |
+| Successful development placements | 14/30 | 17/30 | 21/30 | **25/30** |
+
+The fixed-window validation loss reached 0.603 at 3,000 updates and rose to 2.106 at the end. Over the four candidate checkpoints, closed-loop success increased from 14 to 25 on the same 30 starts.
+
+![Training and fixed-window validation loss over 25,000 updates, alongside the four development success counts.](learning-curve.png)
+
+All 345 vision-language backbone tensors were bitwise identical to the base weights. All 145 action-expert tensors, both state-projection tensors and all eight action and time projection tensors changed. The exported processors matched the training-split statistics. [Checkpoint digest and tensor comparison](checkpoint.json) · [Reproduction commands](../../docs/reproduce.md)

@@ -101,7 +101,7 @@ def build(run, reference_dir, output, ffmpeg):
             "",
             (
                 f"The original robot-pretrained weights completed **{counts['base']}/{total}** "
-                f"placements. The project checkpoint after 2,000 updates completed "
+                f"placements. The project checkpoint after {checkpoint['step']:,} updates completed "
                 f"**{counts['adapted']}/{total}** on those same starts, a change of "
                 f"**{delta:+g} percentage points**. The released LIBERO policy completed "
                 f"{counts['released']}/{total}."
