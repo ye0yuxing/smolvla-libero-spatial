@@ -1,0 +1,15 @@
+{
+  "suite": "libero_spatial",
+  "task_ids": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+  "initial_state_ids": [2, 7, 12, 17, 22, 27, 32, 37, 42, 47],
+  "base_seed": 1000,
+  "max_steps": 280,
+  "settle_steps": 10,
+  "control_hz": 20,
+  "control_mode": "relative",
+  "chunk_size": 50,
+  "n_action_steps": 50,
+  "flow_steps": 10,
+  "lift_threshold_m": 0.03,
+  "scene_trace_version": 1
+}

@@ -1,0 +1,29 @@
+{
+  "policy": {
+    "repo_id": "lerobot/smolvla_libero",
+    "revision": "a24f1f380461b665158d52acd140152c79e8b36d"
+  },
+  "backbone": {
+    "repo_id": "HuggingFaceTB/SmolVLM2-500M-Video-Instruct",
+    "revision": "4cde9d208e19519c36917aa170fffc7e381aa0ad"
+  },
+  "assets": {
+    "repo_id": "lerobot/libero-assets",
+    "revision": "0b3ea86be5fe169d0fd036ae63d1070ec09e90f6"
+  },
+  "demonstrations": {
+    "repo_id": "lerobot/libero",
+    "revision": "a1aaacb7f6cd6ee5fb43120f673cebb0cfea7dd4"
+  },
+  "weight_sha256": {
+    "policy": "9a9f6413e42c0f332fccbce9a0dc796af2790f82cf002f791cdbf7e01e1afca8",
+    "backbone": "b9bfd456c9472c0acd5719d6e514c4b859891af205ee1a736552fd3497b8b0c3"
+  },
+  "suite": "libero_spatial",
+  "task_ids": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+  "initial_state_ids": [0, 1],
+  "base_seed": 1000,
+  "max_steps": 280,
+  "control_hz": 20,
+  "settle_steps": 10
+}

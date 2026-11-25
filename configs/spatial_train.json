@@ -1,0 +1,32 @@
+{
+  "base": {
+    "repo_id": "lerobot/smolvla_base",
+    "revision": "5e8d12a6e2975b0e5e5fce7c8caf47c371d257b6"
+  },
+  "base_sha256": "7cd549ac2351fb069c0ddb3c34ad2d09cfc92b56a15dccdfc2e41467aaca01eb",
+  "instructions": [
+    "pick up the black bowl between the plate and the ramekin and place it on the plate",
+    "pick up the black bowl next to the ramekin and place it on the plate",
+    "pick up the black bowl from table center and place it on the plate",
+    "pick up the black bowl on the cookie box and place it on the plate",
+    "pick up the black bowl in the top drawer of the wooden cabinet and place it on the plate",
+    "pick up the black bowl on the ramekin and place it on the plate",
+    "pick up the black bowl next to the cookie box and place it on the plate",
+    "pick up the black bowl on the stove and place it on the plate",
+    "pick up the black bowl next to the plate and place it on the plate",
+    "pick up the black bowl on the wooden cabinet and place it on the plate"
+  ],
+  "split_seed": 73,
+  "validation_fraction": 0.1,
+  "seed": 2026,
+  "steps": 2000,
+  "batch_size": 8,
+  "workers": 4,
+  "learning_rate": 0.0001,
+  "warmup_steps": 100,
+  "final_lr_fraction": 0.1,
+  "checkpoint_every": 500,
+  "validate_every": 250,
+  "log_every": 25,
+  "validation_frames_per_task": 8
+}

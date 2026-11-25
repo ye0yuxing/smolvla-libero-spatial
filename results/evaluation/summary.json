@@ -1,0 +1,59 @@
+{
+  "starts": 100,
+  "rollouts": 300,
+  "adapted_minus_base_pp": 24.0,
+  "policies": {
+    "base": {
+      "episodes": 100,
+      "successes": 0,
+      "actions": 28000,
+      "chunk_calls": 600,
+      "median_chunk_ms": 392.55,
+      "failure_counts": {
+        "no_target_contact": 99,
+        "contact_without_lift": 0,
+        "lift_without_placement": 1
+      }
+    },
+    "adapted": {
+      "episodes": 100,
+      "successes": 24,
+      "actions": 23940,
+      "chunk_calls": 521,
+      "median_chunk_ms": 385.02,
+      "failure_counts": {
+        "no_target_contact": 57,
+        "contact_without_lift": 2,
+        "lift_without_placement": 17
+      }
+    },
+    "released": {
+      "episodes": 100,
+      "successes": 66,
+      "actions": 16367,
+      "chunk_calls": 375,
+      "median_chunk_ms": 381.67,
+      "failure_counts": {
+        "no_target_contact": 20,
+        "contact_without_lift": 1,
+        "lift_without_placement": 13
+      }
+    }
+  },
+  "runtime": {
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "cuda": "12.8",
+    "mujoco_gl": "egl",
+    "versions": {
+      "lerobot": "0.7.0",
+      "hf-libero": "0.1.5",
+      "robosuite": "1.4.0",
+      "mujoco": "3.8.1",
+      "torch": "2.8.0",
+      "torchvision": "0.23.0",
+      "transformers": "5.22.2",
+      "numpy": "2.2.6"
+    }
+  },
+  "base_weight_sha256": "7cd549ac2351fb069c0ddb3c34ad2d09cfc92b56a15dccdfc2e41467aaca01eb"
+}

@@ -1,0 +1,35 @@
+{
+  "initialization": {
+    "repo_id": "lerobot/smolvla_base",
+    "revision": "5e8d12a6e2975b0e5e5fce7c8caf47c371d257b6"
+  },
+  "base_sha256": "7cd549ac2351fb069c0ddb3c34ad2d09cfc92b56a15dccdfc2e41467aaca01eb",
+  "dataset": {
+    "repo_id": "lerobot/libero",
+    "revision": "a1aaacb7f6cd6ee5fb43120f673cebb0cfea7dd4"
+  },
+  "split_sha256": "44f9f6d345f00432461e2ae2904f8f5af8b37eb00dfaac70fddc607801b8f79d",
+  "step": 2000,
+  "seed": 2026,
+  "checkpoint_sha256": "494ef1058765c687a73f1cff3496f65535849ed455731296b567425d664da7e1",
+  "checkpoint_bytes": 906712552,
+  "train_statistics_verified": true,
+  "tensor_comparison": {
+    "action_and_time_projections": {
+      "total": 8,
+      "changed": 8
+    },
+    "state_projection": {
+      "total": 2,
+      "changed": 2
+    },
+    "action_expert": {
+      "total": 145,
+      "changed": 112
+    },
+    "vision_language_backbone": {
+      "total": 345,
+      "changed": 0
+    }
+  }
+}

@@ -1,0 +1,9 @@
+# Linux x86_64, Python 3.12. The PyPI Linux torch wheel uses CUDA 12.8.
+-c configs/constraints-linux-py312.txt
+lerobot[smolvla,libero]==0.7.0
+hf-libero==0.1.5
+torch==2.8.0
+torchvision==0.23.0
+torchcodec==0.7.0
+transformers==5.22.2
+imageio-ffmpeg==0.6.0
