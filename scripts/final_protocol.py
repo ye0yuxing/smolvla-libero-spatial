@@ -32,6 +32,28 @@ def interface_hashes(model_dir):
     return {name: file_sha256(model_dir / name) for name in sorted(files)}
 
 
+def processor_artifact_hashes(model_dir):
+    """Hash the sidecar files referenced by LeRobot processors, including tokenizer directories."""
+    files = set()
+    for pipeline in ("policy_preprocessor.json", "policy_postprocessor.json"):
+        for step in read_json(model_dir / pipeline)["steps"]:
+            for name in step.get("artifacts", {}).values():
+                relative = Path(name)
+                if relative.is_absolute() or not relative.parts or ".." in relative.parts:
+                    raise ValueError(f"Invalid processor artifact path in {pipeline}: {name!r}")
+                path = model_dir / relative
+                if path.is_file():
+                    files.add(path)
+                elif path.is_dir():
+                    members = [child for child in path.rglob("*") if child.is_file()]
+                    if not members:
+                        raise ValueError(f"Empty processor artifact directory: {relative}")
+                    files.update(members)
+                else:
+                    raise FileNotFoundError(f"Missing processor artifact in {pipeline}: {relative}")
+    return {p.relative_to(model_dir).as_posix(): file_sha256(p) for p in sorted(files)}
+
+
 def expected_interface(checkpoint):
     if "interface_sha256" in checkpoint:
         return checkpoint["interface_sha256"]
@@ -129,6 +151,9 @@ def check_shard(folder, task, role, plan, official, checkpoint):
                 )
             },
         }
+    elif role == "distilled":
+        digest = checkpoint["checkpoint_sha256"]
+        expected["policy"] = checkpoint["provenance"]
     else:
         expected["policy"] = official["policy"]
     expected["weight_sha256"] = {**official["weight_sha256"], "policy": digest}

@@ -263,6 +263,10 @@ def main():
         verify(args.output)
     elif args.output is None:
         verify(args.verify or ROOT / "results/evaluation")
+        if args.verify is None:
+            from few_step_results import verify as verify_few_steps
+
+            verify_few_steps(ROOT / "results/few-steps")
     else:
         parser.error("--output requires --from-reports")
 

@@ -1,0 +1,9 @@
+{
+  "development_flow_steps": [10, 5, 2, 1],
+  "low_step_candidates": [1, 2],
+  "max_development_loss_episodes": 1,
+  "max_median_latency_ratio": 0.75,
+  "final_loss_margin_episodes_per_100": 3,
+  "borderline_episodes_per_100": 2,
+  "confirmation_state_ids": [4, 9, 14, 19, 24, 29, 34, 39, 44, 49]
+}

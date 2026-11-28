@@ -1,0 +1,115 @@
+{
+  "teacher_sha256": "11e6d9a2fa18df52f14d9fe683eb07fc0bfc3daf8bdce61ec25ad34f7db5d8d2",
+  "student_sha256": "f91912ce537d06a326cc05db015d22253be2b9b4353c8680b2e416ac3ed021b3",
+  "runtime": {
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "cuda": "12.8",
+    "mujoco_gl": "egl",
+    "versions": {
+      "lerobot": "0.7.0",
+      "hf-libero": "0.1.5",
+      "robosuite": "1.4.0",
+      "mujoco": "3.8.1",
+      "torch": "2.8.0",
+      "torchvision": "0.23.0",
+      "transformers": "5.22.2",
+      "numpy": "2.2.6"
+    }
+  },
+  "scores": {
+    "native-development": {
+      "flow-10": {
+        "episodes": 30,
+        "successes": 25,
+        "chunk_calls": 98,
+        "median_ms": 394.025,
+        "p95_ms": 446.511
+      },
+      "flow-5": {
+        "episodes": 30,
+        "successes": 23,
+        "chunk_calls": 103,
+        "median_ms": 300.08,
+        "p95_ms": 315.157
+      },
+      "flow-2": {
+        "episodes": 30,
+        "successes": 19,
+        "chunk_calls": 113,
+        "median_ms": 194.94,
+        "p95_ms": 201.844
+      },
+      "flow-1": {
+        "episodes": 30,
+        "successes": 22,
+        "chunk_calls": 105,
+        "median_ms": 158.54,
+        "p95_ms": 161.976
+      }
+    },
+    "student-development": {
+      "flow-10": {
+        "episodes": 30,
+        "successes": 25,
+        "chunk_calls": 98,
+        "median_ms": 367.035,
+        "p95_ms": 426.16
+      },
+      "flow-2": {
+        "episodes": 30,
+        "successes": 19,
+        "chunk_calls": 113,
+        "median_ms": 182.02,
+        "p95_ms": 214.0
+      },
+      "student-2": {
+        "episodes": 30,
+        "successes": 24,
+        "chunk_calls": 98,
+        "median_ms": 182.07,
+        "p95_ms": 209.373
+      }
+    },
+    "student-final": {
+      "flow-10": {
+        "episodes": 100,
+        "successes": 70,
+        "chunk_calls": 362,
+        "median_ms": 381.66,
+        "p95_ms": 427.772
+      },
+      "flow-2": {
+        "episodes": 100,
+        "successes": 68,
+        "chunk_calls": 368,
+        "median_ms": 200.775,
+        "p95_ms": 209.0765
+      },
+      "student-2": {
+        "episodes": 100,
+        "successes": 70,
+        "chunk_calls": 360,
+        "median_ms": 201.02,
+        "p95_ms": 207.955
+      }
+    }
+  },
+  "final_student_pairs": {
+    "flow-10": {
+      "both": 63,
+      "reference_only": 7,
+      "candidate_only": 7,
+      "neither": 23
+    },
+    "flow-2": {
+      "both": 62,
+      "reference_only": 6,
+      "candidate_only": 8,
+      "neither": 24
+    }
+  },
+  "file_sha256": {
+    "episodes.jsonl": "16433718e71cfb855b708c90c1e1bfa7fd179fafac61cb34e4b62cbae13d8589",
+    "student.json": "b05a9bd962c3f6c6c91b8563a40594da27b8ca13d8ad2b6f5a308ad7479bfd60"
+  }
+}

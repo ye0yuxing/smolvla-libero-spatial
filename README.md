@@ -1,16 +1,20 @@
 # SmolVLA on LIBERO-Spatial
 
-SmolVLA completed **70 of 100 placements** after fine-tuning on 389 LIBERO-Spatial demonstrations with a single RTX 4090. On the same 100 starts, LeRobot’s released LIBERO checkpoint completed **66**, and the robot-pretrained base completed **0**.
+A two-step SmolVLA student completed **70 of 100 placements**, matching its ten-step teacher’s success count on the same 100 LIBERO-Spatial starts. Reducing the solver from ten to two Euler updates brought median action-chunk latency from **382 to 201 ms** on one RTX 4090. With the original teacher weights, the two-step solver completed **68/100**.
 
-Each instruction asks a simulated Franka Panda to place a particular black bowl on a plate. Phrases such as “on the cookie box” and “next to the cookie box” identify which bowl to pick up. The policy receives the instruction, an external camera view, a wrist camera view and the robot state.
+| Policy in the same evaluation | Euler steps | Successful placements | Median ms/chunk | P95 ms/chunk |
+| --- | ---: | ---: | ---: | ---: |
+| Fine-tuned teacher | 10 | 70/100 | 381.7 | 427.8 |
+| Same teacher weights, shorter solver | 2 | 68/100 | 200.8 | 209.1 |
+| Distilled student | 2 | **70/100** | **201.0** | 208.0 |
 
-| Policy | Training used for this comparison | Successful placements |
-| --- | --- | ---: |
-| Project-adapted SmolVLA | Frozen vision-language backbone, action expert and projections fine-tuned for 25,000 updates on Spatial demonstrations | **70/100** |
-| LeRobot’s released LIBERO policy | Published LIBERO-trained checkpoint with its own saved processors | 66/100 |
-| Robot-pretrained SmolVLA base | Zero Spatial updates, with the same LIBERO input and action processing as the project policy | 0/100 |
+Each policy observes a language instruction, external and wrist camera images, and robot state. It generates 50 end-effector and gripper commands at a time. The table times that prediction at batch size one. The robot executes up to 50 commands at 20 Hz before requesting a new prediction. All ten instructions were present in training. [Per-task results, paired gains and losses, and rollout videos](results/few-steps/README.md)
 
-Four checkpoints were evaluated on 30 development starts. The 25,000-update checkpoint won with 25 successes and was then evaluated on ten separate starts for each of the ten training instructions. All three policies share the instruction, seed and settled simulator state for each comparison. [Training and checkpoint selection](results/training/README.md) · [Per-task results and failure analysis](results/evaluation/README.md)
+## Training the teacher and student
+
+The teacher starts from LeRobot’s robot-pretrained SmolVLA. Fine-tuning on Spatial demonstrations freezes the vision-language backbone and updates the action expert and its input/output projections, including the state projection. The 25,000-update checkpoint won selection on 30 development starts. On the separate 100-start evaluation it completed **70** placements, compared with **0** for the original base and **66** for LeRobot’s released LIBERO policy. [Training and checkpoint selection](results/training/README.md) · [Base and released-policy evaluation](results/evaluation/README.md)
+
+An initial sweep of 10, 5, 2 and 1 Euler steps exposed a loss of placements at short solver lengths. For distillation, the teacher and student receive the same observation and initial action noise. The student learns to reach the teacher’s midpoint in its first update and its endpoint in its second. On the final starts the student gained eight placements and lost six against the direct two-step baseline. [Distillation implementation](scripts/distill_two_steps.py) · [Episode-level evidence](results/few-steps/episodes.jsonl)
 
 ## Watch the policy execute
 
@@ -20,13 +24,13 @@ The adapted policy picked up the bowl from the center of the table and placed it
 
 ## Reproduce the results
 
-To verify the checkpoint selection and the **300 recorded rollout summaries**, run this command from the project root with Python 3.12. It uses the standard library to check file digests, paired starts, success counts and inference timings.
+This command uses Python 3.12’s standard library to verify checkpoint selection, 300 adaptation/control rollouts and 510 few-step rollouts. It recomputes the reported success counts, paired outcomes and inference latencies from episode records.
 
 ```bash
 python3 scripts/results.py
 ```
 
-The GPU reproduction guide runs the full training and selection workflow from pinned public inputs and shows how to rerun the two controls. Each new run saves its loadable checkpoints, dual-camera videos, simulator commands and predicted actions under `outputs/`. [GPU reproduction guide](docs/reproduce.md) · [Observation and action conventions](docs/interface.md)
+The GPU guide covers data preparation, fine-tuning, the native solver sweep, distillation and closed-loop evaluation. The repository ships the recipes, checkpoint digests and compact evidence. Running the training commands produces loadable teacher and student weights under `outputs/`. [GPU reproduction guide](docs/reproduce.md) · [Observation and action conventions](docs/interface.md)
 
 ## Credits and license
 

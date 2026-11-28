@@ -15,7 +15,7 @@ The preprocessor normalizes the robot state. For the project-adapted policy and 
 
 ## Action chunks
 
-One policy call uses ten flow integration steps to generate 50 seven-dimensional actions. The saved postprocessor restores the action scale component by component with `normalized_action * std + mean`. The first three components command relative translation, the next three relative rotation and the last the gripper. Positive gripper commands close the fingers.
+One policy call generates 50 seven-dimensional actions. The original teacher uses ten Euler integration steps inside the call. The distilled student uses two to generate the same size chunk. The saved postprocessor restores the action scale component by component with `normalized_action * std + mean`. The first three components command relative translation, the next three relative rotation and the last the gripper. Positive gripper commands close the fingers. [Solver comparison](../results/few-steps/README.md)
 
 The synchronous evaluator issues up to 50 commands at 20 Hz before making a new prediction from the latest observation. A full chunk therefore spans 2.5 simulated seconds. If LIBERO reports success mid-chunk, execution stops at that step. The demonstration data declares 10 fps. [Execution settings](../configs/final_spatial.json) · [Recorded dataset revision](https://huggingface.co/datasets/lerobot/libero/tree/a1aaacb7f6cd6ee5fb43120f673cebb0cfea7dd4)
 
@@ -23,4 +23,4 @@ The synchronous evaluator issues up to 50 commands at 20 Hz before making a new 
 
 Frame zero follows a hard reset to the indexed initial state and ten settling actions. Row `t` in `steps.jsonl` contains the state, the command between frames `t` and `t + 1`, the following state, reward and termination flags. Its `chunk_start` locates the prediction in `chunks.jsonl`, and its `chunk_offset` selects the executed action. Videos place the external camera on the left and the wrist camera on the right.
 
-`episode.json` stores the instruction, seed, outcomes, control-step count and per-call inference times in milliseconds. Each inference time measures one GPU-synchronized, batch-one prediction including its ten flow steps. Preprocessing, action unnormalization, physics and video encoding run outside this timer. The first call can include warm-up. [Example with measurements](../results/evaluation/placement-case/README.md)
+`episode.json` stores the instruction, seed, outcomes, control-step count and per-call inference times in milliseconds. Each inference time measures one GPU-synchronized, batch-one prediction, including all Euler steps for the selected solver. Preprocessing, action unnormalization, physics and video encoding run outside this timer. The first call can include warm-up. [Example with measurements](../results/evaluation/placement-case/README.md)

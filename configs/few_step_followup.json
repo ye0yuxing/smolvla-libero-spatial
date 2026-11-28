@@ -1,0 +1,15 @@
+{
+  "repeat_state_ids": [2, 12, 22, 32, 42],
+  "policy_noise_seed_offset": 1000000,
+  "teacher_flow_steps": 10,
+  "student_flow_steps": 2,
+  "updates": 2000,
+  "batch_size": 16,
+  "workers": 4,
+  "seed": 1827,
+  "learning_rate": 0.00002,
+  "warmup_steps": 100,
+  "final_lr_fraction": 0.1,
+  "checkpoint_every": 250,
+  "min_student_gain_episodes": 1
+}

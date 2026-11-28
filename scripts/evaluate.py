@@ -118,7 +118,9 @@ def record_line(stream, record):
 
 
 @torch.inference_mode()
-def run_episode(env, processors, config, state_id, folder, record_scene=False):
+def run_episode(
+    env, processors, config, state_id, folder, record_scene=False, *, record_noise=False
+):
     from lerobot.sim.integrations.libero import canonical_observation
 
     policy, pre, post = processors
@@ -130,6 +132,8 @@ def run_episode(env, processors, config, state_id, folder, record_scene=False):
     pre.reset()
     post.reset()
     raw, _ = env.reset(seed=seed)
+    if config.get("flow_noise_seed_offset", 0):
+        torch.manual_seed(seed + config["flow_noise_seed_offset"])
     obs = canonical_observation(raw)
     scene = SpatialScene(env) if record_scene else None
     hz = config["control_hz"]
@@ -162,15 +166,22 @@ def run_episode(env, processors, config, state_id, folder, record_scene=False):
                 batch = pre(model_input(obs, env.task_description))
                 torch.cuda.synchronize()
                 start = perf_counter()
-                actions = policy.predict_action_chunk(batch)
+                if record_noise:
+                    shape = (1, policy.config.chunk_size, policy.config.max_action_dim)
+                    noise = policy.model.sample_noise(shape, batch["observation.state"].device)
+                    actions = policy.predict_action_chunk(batch, noise=noise)
+                else:
+                    actions = policy.predict_action_chunk(batch)
                 torch.cuda.synchronize()
                 inference_ms.append((perf_counter() - start) * 1000)
                 expected = (1, policy.config.chunk_size, 7)
                 if tuple(actions.shape) != expected or not torch.isfinite(actions).all():
                     raise ValueError(f"Invalid action chunk at step {step}, shape {actions.shape}")
-                record_line(
-                    chunks, {"step": step, "normalized_actions": actions[0].float().tolist()}
-                )
+                chunk = {"step": step, "normalized_actions": actions[0].float().tolist()}
+                if record_noise:
+                    noise_bytes = noise.cpu().numpy().tobytes()
+                    chunk["noise_sha256"] = hashlib.sha256(noise_bytes).hexdigest()
+                record_line(chunks, chunk)
             action = post(actions[:, offset])[0].detach().float().cpu().numpy()
             if action.shape != (7,) or not np.isfinite(action).all():
                 raise ValueError(f"Invalid environment action at step {step}")
@@ -235,6 +246,17 @@ def main():
     )
     parser.add_argument("--task-ids", nargs="+", type=int, help="Default: all ten tasks")
     parser.add_argument(
+        "--flow-steps",
+        nargs="+",
+        type=int,
+        metavar="K",
+        help="Compare Euler step counts at paired starts and save a flow-K directory for each",
+    )
+    parser.add_argument("--flow-noise-seed-offset", default=0, type=int,
+                        help="Change only policy sampling noise after resetting the environment")
+    parser.add_argument("--student-checkpoint", type=Path,
+                        help="Include a distilled two-step checkpoint in the same rollout order")
+    parser.add_argument(
         "--record-scene",
         action="store_true",
         help="Record Spatial goal objects and fingerpad contact for analysis",
@@ -243,6 +265,14 @@ def main():
         "--state-ids", nargs="+", type=int, help="Default: the two development states"
     )
     args = parser.parse_args()
+    if args.flow_steps and (
+        min(args.flow_steps) < 1 or len(set(args.flow_steps)) != len(args.flow_steps)
+    ):
+        parser.error("--flow-steps must contain distinct positive integers")
+    if (args.flow_noise_seed_offset or args.student_checkpoint) and not args.flow_steps:
+        parser.error("Noise repeats and student comparisons require --flow-steps")
+    if args.student_checkpoint and (not args.checkpoint or args.step_zero):
+        parser.error("Student comparisons require the teacher --checkpoint")
     if args.checkpoint_record is not None and not args.step_zero:
         parser.error("--checkpoint-record applies to --step-zero")
     if args.step_zero and args.checkpoint is None:
@@ -250,6 +280,8 @@ def main():
             "--step-zero needs the adapted --checkpoint for its configuration and processors"
         )
     config = json.loads(CONFIG.read_text())
+    if args.flow_noise_seed_offset:
+        config["flow_noise_seed_offset"] = args.flow_noise_seed_offset
     task_ids = args.task_ids or config["task_ids"]
     state_ids = args.state_ids or config["initial_state_ids"]
     if len(set(task_ids)) != len(task_ids) or len(set(state_ids)) != len(state_ids):
@@ -315,37 +347,75 @@ def main():
             manifest["weight_sha256"] = {**config["weight_sha256"], "policy": digest}
         if args.record_scene:
             manifest["scene_trace_version"] = 1
-        (args.output / "protocol.json").write_text(json.dumps(manifest, indent=2) + "\n")
-        episodes = []
+        counts = args.flow_steps or [policy.config.num_steps]
+        variants = {f"flow-{k}": (k, processors, manifest) for k in counts}
+        if args.student_checkpoint:
+            student = load_policy(config, args.student_checkpoint)
+            provenance = read_json(args.student_checkpoint / "training_provenance.json")
+            if (
+                provenance.get("source") != "two_step_distillation"
+                or provenance.get("parent_sha256") != manifest["weight_sha256"]["policy"]
+                or student[0].config.num_steps != 2
+                or student[0].config.chunk_size != policy.config.chunk_size
+                or student[0].config.n_action_steps != policy.config.n_action_steps
+            ):
+                raise ValueError("Student provenance or deployment configuration differs from the plan")
+            digest = file_sha256(args.student_checkpoint / "model.safetensors")
+            variants["student-2"] = (2, student, {
+                **manifest, "policy": provenance,
+                "weight_sha256": {**manifest["weight_sha256"], "policy": digest},
+            })
+        labels = list(variants)
+        roots = {}
+        episodes = {label: [] for label in labels}
+        for label, (k, _, base_manifest) in variants.items():
+            root = args.output / label if args.flow_steps else args.output
+            root.mkdir(exist_ok=True)
+            roots[label] = root
+            protocol = {**base_manifest, "flow_steps": k}
+            if args.flow_steps:
+                protocol["noise_protocol"] = "episode_seeded_native_gaussian_sha256"
+            (root / "protocol.json").write_text(json.dumps(protocol, indent=2) + "\n")
         for task_id in task_ids:
-            for state_id in state_ids:
-                folder = args.output / f"task-{task_id:02d}_state-{state_id:02d}"
-                with closing(
-                    LiberoEnv(
-                        suite,
-                        task_id,
-                        config["suite"],
-                        obs_type="pixels_agent_pos",
-                        episode_index=state_id,
-                        control_mode="relative",
-                        hard_reset=True,
-                        num_steps_wait=config["settle_steps"],
-                        control_freq=config["control_hz"],
+            for index, state_id in enumerate(state_ids):
+                # Balance which solver goes first, including the first call after each task reload.
+                shift = (task_id + index) % len(labels)
+                for label in labels[shift:] + labels[:shift]:
+                    k, active, _ = variants[label]
+                    active[0].config.num_steps = k
+                    folder = roots[label] / f"task-{task_id:02d}_state-{state_id:02d}"
+                    with closing(
+                        LiberoEnv(
+                            suite,
+                            task_id,
+                            config["suite"],
+                            obs_type="pixels_agent_pos",
+                            episode_index=state_id,
+                            control_mode="relative",
+                            hard_reset=True,
+                            num_steps_wait=config["settle_steps"],
+                            control_freq=config["control_hz"],
+                        )
+                    ) as env:
+                        episode = run_episode(
+                            env, active, config, state_id, folder, args.record_scene,
+                            record_noise=bool(args.flow_steps),
+                        )
+                    (folder / "episode.json").write_text(json.dumps(episode, indent=2) + "\n")
+                    episodes[label].append(episode)
+                    flow_label = f"  flow={k}" if args.flow_steps else ""
+                    if args.student_checkpoint:
+                        flow_label += f"  policy={label}"
+                    print(
+                        f"{folder.name}{flow_label}  success={episode['success']}  steps={episode['steps']}",
+                        flush=True,
                     )
-                ) as env:
-                    episode = run_episode(
-                        env, processors, config, state_id, folder, args.record_scene
-                    )
-                (folder / "episode.json").write_text(json.dumps(episode, indent=2) + "\n")
-                episodes.append(episode)
-                print(
-                    f"{folder.name}  success={episode['success']}  steps={episode['steps']}",
-                    flush=True,
-                )
-        successes = sum(ep["success"] for ep in episodes)
-        summary = {"successes": successes, "n_episodes": len(episodes), "episodes": episodes}
-        (args.output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
-        print(f"Completed {len(episodes)} episodes with {successes} successes.")
+        for label, rows in episodes.items():
+            successes = sum(ep["success"] for ep in rows)
+            summary = {"successes": successes, "n_episodes": len(rows), "episodes": rows}
+            (roots[label] / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+            flow_label = f" for {label}" if args.flow_steps else ""
+            print(f"Completed {len(rows)} episodes{flow_label} with {successes} successes.")
 
 
 if __name__ == "__main__":

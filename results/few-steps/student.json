@@ -1,0 +1,37 @@
+{
+  "provenance": {
+    "source": "two_step_distillation",
+    "parent_sha256": "11e6d9a2fa18df52f14d9fe683eb07fc0bfc3daf8bdce61ec25ad34f7db5d8d2",
+    "dataset": {
+      "repo_id": "lerobot/libero",
+      "revision": "a1aaacb7f6cd6ee5fb43120f673cebb0cfea7dd4"
+    },
+    "split_sha256": "44f9f6d345f00432461e2ae2904f8f5af8b37eb00dfaac70fddc607801b8f79d",
+    "updates": 2000,
+    "seed": 1827,
+    "teacher_flow_steps": 10,
+    "student_flow_steps": 2
+  },
+  "checkpoint_sha256": "f91912ce537d06a326cc05db015d22253be2b9b4353c8680b2e416ac3ed021b3",
+  "changed_expert_tensors": 120,
+  "interface_sha256": {
+    "config.json": "568f5961011aebe77b3cbffb43eccd0be261b0068da28f3cba82d6cd09646c8e",
+    "policy_postprocessor.json": "3b51f092c70c710ce0213ee1b63bf51b4878ec67828dd2d67daf9ef51081a41a",
+    "policy_postprocessor_step_0_unnormalizer_processor.safetensors": "51aafe9e070c0661eb8b6da4adc122c65d94dbd2af8e29b6cff6200866bcd9b7",
+    "policy_preprocessor.json": "28267dac4662868041b2f97ee19080947135bb27456976eae079e71d8ebdde5f",
+    "policy_preprocessor_step_5_normalizer_processor.safetensors": "51aafe9e070c0661eb8b6da4adc122c65d94dbd2af8e29b6cff6200866bcd9b7"
+  },
+  "processor_artifact_sha256": {
+    "tokenizer/chat_template.jinja": "af80b984f1e7c2dff1bb2dc3ecbf83fe385ab1cf84118b810e4bf64e73b414b8",
+    "tokenizer/tokenizer.json": "fd73abe390ac52c1058c41c69715800963dd1bc77a5867cade946a544eee219e",
+    "tokenizer/tokenizer_config.json": "1786e1e1876520994dfa3b87d4aac494a010e8ba9f258b9456c0a54a3c80e314"
+  },
+  "offline_validation": {
+    "heldout_observations": 80,
+    "valid_action_coordinates": 20769,
+    "endpoint_mse_vs_teacher": {
+      "native_2": 0.009934814574644547,
+      "distilled_2": 0.008201876228325569
+    }
+  }
+}
